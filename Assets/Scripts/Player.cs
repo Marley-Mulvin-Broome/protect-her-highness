@@ -6,7 +6,10 @@ using UnityEngine;
 public class Player : MonoBehaviour
 {
     [SerializeField] public float speed;
+    [SerializeField] public float maximumStationaryTime = 1.5f;
     
+    private bool _isMoving = false;
+    private float _remainingTimeStationary = 1.5f;
     private Camera _mainCamera;
     
     // Start is called before the first frame update
@@ -21,12 +24,18 @@ public class Player : MonoBehaviour
         _handlePlayerInput();
     }
 
-    private void OnCollisionEnter2D(Collision2D other)
+    private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.gameObject.CompareTag("Enemy"))
         {
-            Destroy(gameObject);
+            _die();
         }
+    }
+
+    private void _die()
+    {
+        GameManager.Instance.Events.PlayerDiedEvent();
+        GameObject.Destroy(gameObject);
     }
 
     private void _doXMovement(float direction)
@@ -53,12 +62,31 @@ public class Player : MonoBehaviour
         }
     }
 
+    private void _handleStationaryMovement()
+    {
+        if (_isMoving)
+        {
+            _remainingTimeStationary = maximumStationaryTime;
+            _isMoving = false;
+        }
+            
+        _remainingTimeStationary -= Time.deltaTime;
+            
+        if (_remainingTimeStationary <= 0)
+        {
+            _die();
+        }
+    }
+
     private void _handlePlayerInput()
     {
         if (!Input.GetMouseButton(0))
         {
+            _handleStationaryMovement();
             return;
         }
+
+        _isMoving = true;
         
         Vector3 mousePosition = _mainCamera.ScreenToWorldPoint(Input.mousePosition);
         

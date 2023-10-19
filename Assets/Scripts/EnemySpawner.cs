@@ -8,7 +8,7 @@ public class EnemySpawner : MonoBehaviour
     [FormerlySerializedAs("_spawnRate")] [SerializeField]
     private float spawnRate = 1.0f;
     [FormerlySerializedAs("_spawnPointOffset")] [SerializeField]
-    private float spawnPointOffset = 0.5f;
+    private float spawnPointOffset = 20f;
 
     private float _currentSpawnTime;
     
@@ -17,8 +17,8 @@ public class EnemySpawner : MonoBehaviour
     private float _spawnVerticalMinimumY;
     private float _spawnVerticalMaximumY;
 
-    [SerializeField]
-    private GameObject _enemyPrefab;
+    [FormerlySerializedAs("_enemyPrefab")] [SerializeField]
+    private GameObject enemyPrefab;
 
     public enum Orientation
     {
@@ -67,10 +67,12 @@ public class EnemySpawner : MonoBehaviour
     {
         if (Utility.CoinFlip())
         {
+            Debug.Log("Spawning enemy horizontally.");
             _spawnEnemyHorizontal();
             return;
         }
         
+        Debug.Log("Spawning enemy vertically.");
         _spawnEnemyVertical();
     }
 
@@ -117,14 +119,34 @@ public class EnemySpawner : MonoBehaviour
 
     private void _spawnEnemyAt(Vector3 position, Orientation orientation)
     {
-        if (_enemyPrefab is null)
+        if (enemyPrefab is null)
         {
             throw new NullReferenceException("EnemySpawner requires a reference to an enemy prefab.");
         }
 
-        GameObject enemy = GameObject.Instantiate<GameObject>(_enemyPrefab, transform);
+        GameObject enemy = GameObject.Instantiate<GameObject>(enemyPrefab, transform);
+
+
+        enemy.GetComponent<Enemy>().Direction = _directionFromOrientation(orientation);
         
         enemy.transform.position = position;
         enemy.transform.Rotate(0f, 0f, (float) orientation);
+    }
+
+    private static Vector2 _directionFromOrientation(Orientation orientation)
+    {
+        switch (orientation)
+        {
+            case Orientation.Bottom:
+                return Vector2.down;
+            case Orientation.Top:
+                return Vector2.up;
+            case Orientation.Left:
+                return Vector2.left;
+            case Orientation.Right:
+                return Vector2.right;
+        }
+        
+        throw new ArgumentException("Invalid orientation provided.");
     }
 }
